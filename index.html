@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Arsip Data Bidang Promo - TVRI Jawa Tengah</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Font (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        tvri: {
+                            navy: '#0B2545',
+                            blue: '#134074',
+                            cyan: '#00A8E8',
+                            gold: '#FFB703',
+                            light: '#EEF4F8',
+                            dark: '#051923'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for better visual polish */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-tvri-navy text-white shadow-lg sticky top-0 z-30 border-b border-tvri-blue">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <!-- Logo & Title -->
+                <div class="flex items-center space-x-3">
+                    <div class="w-12 h-12 bg-tvri-cyan rounded-xl flex items-center justify-center text-tvri-navy font-bold text-2xl shadow-md border-2 border-white/20">
+                        <i class="fa-solid font-bold">TVRI</i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                            Arsip Bidang Promo
+                            <span class="text-xs bg-tvri-gold text-tvri-navy px-2 py-0.5 rounded-full font-semibold">Jawa Tengah</span>
+                        </h1>
+                        <p class="text-xs text-slate-300">LPP TVRI Stasiun Jawa Tengah • System Database Management</p>
+                    </div>
+                </div>
+
+                <!-- Header Actions -->
+                <div class="flex items-center gap-3">
+                    <button onclick="openModal()" class="bg-tvri-cyan hover:bg-sky-400 text-tvri-navy font-semibold px-4 py-2.5 rounded-lg text-sm shadow-md transition flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Tambah Arsip Baru</span>
+                    </button>
+                    <div class="relative group">
+                        <button class="bg-tvri-blue hover:bg-slate-700 text-white px-3 py-2.5 rounded-lg text-sm transition flex items-center gap-2 border border-slate-600">
+                            <i class="fa-solid fa-download"></i>
+                            <span class="hidden sm:inline">Ekspor</span>
+                            <i class="fa-solid fa-chevron-down text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-xl border border-slate-200 hidden group-hover:block z-50 overflow-hidden">
+                            <button onclick="exportToCSV()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 text-slate-700 flex items-center gap-2">
+                                <i class="fa-solid fa-file-csv text-green-600"></i> Export CSV
+                            </button>
+                            <button onclick="exportToJSON()" class="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 text-slate-700 flex items-center gap-2 border-t border-slate-100">
+                                <i class="fa-solid fa-code text-blue-600"></i> Export JSON
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+
+        <!-- Stat Cards Summary -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Arsip</p>
+                    <h3 class="text-2xl font-bold text-slate-800 mt-1" id="stat-total">0</h3>
+                    <p class="text-xs text-slate-400 mt-1">Item Data Terdaftar</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-50 text-tvri-blue rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Kategori Terbanyak</p>
+                    <h3 class="text-lg font-bold text-slate-800 mt-1 truncate max-w-[140px]" id="stat-top-cat">-</h3>
+                    <p class="text-xs text-slate-400 mt-1" id="stat-top-cat-count">0 File</p>
+                </div>
+                <div class="w-12 h-12 bg-amber-50 text-tvri-gold rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-chart-pie"></i>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">Google Drive</p>
+                    <h3 class="text-2xl font-bold text-tvri-cyan mt-1" id="stat-drive-link">0</h3>
+                    <p class="text-xs text-slate-400 mt-1">Tautan Aktif Terhubung</p>
+                </div>
+                <div class="w-12 h-12 bg-sky-50 text-tvri-cyan rounded-xl flex items-center justify-center text-xl">
+                    <i class="fa-brands fa-google-drive"></i>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filter & Search Control Panel -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+            <div class="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center justify-between">
+                
+                <!-- Search Bar -->
+                <div class="relative flex-1">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="applyFilters()" placeholder="Cari Judul Arsip atau Kategori..." class="w-full pl-10 pr-4 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-tvri-cyan focus:bg-white transition">
+                </div>
+
+                <!-- Filters Group -->
+                <div class="flex flex-wrap sm:flex-nowrap items-center gap-3">
+                    <!-- Reset Filter Button -->
+                    <button onclick="resetFilters()" class="px-3 py-2 text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg text-sm font-medium transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-rotate-left text-xs"></i> Reset Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Filtering (Categorical Tabs) -->
+            <div class="mt-4 pt-3 border-t border-slate-100 overflow-x-auto">
+                <div class="flex space-x-2 pb-1" id="categoryTabs">
+                    <!-- Tabs rendered dynamically in JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Database Table -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-800 text-white text-xs uppercase tracking-wider font-semibold">
+                            <th class="py-3.5 px-4 w-14 text-center">No</th>
+                            <th class="py-3.5 px-4">Judul Arsip</th>
+                            <th class="py-3.5 px-4">Kategori</th>
+                            <th class="py-3.5 px-4">Tanggal</th>
+                            <th class="py-3.5 px-4 text-center">Link Google Drive</th>
+                            <th class="py-3.5 px-4 text-center w-24">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody" class="divide-y divide-slate-200 text-sm">
+                        <!-- Data Rows Generated Dynamically -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Empty State Display -->
+            <div id="emptyState" class="hidden py-12 text-center">
+                <i class="fa-solid fa-folder-open text-4xl text-slate-300 mb-3"></i>
+                <h4 class="text-slate-600 font-semibold">Tidak ada arsip ditemukan</h4>
+                <p class="text-xs text-slate-400 mt-1">Coba sesuaikan kata kunci pencarian atau filter Anda.</p>
+            </div>
+
+            <!-- Table Footer & Pagination -->
+            <div class="bg-slate-50 px-4 py-3 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-3">
+                <span id="tableInfo">Menampilkan 0 dari 0 data</span>
+                <div class="flex items-center space-x-1" id="pagination">
+                    <!-- Pagination Buttons Generated by JS -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+            &copy; 2026 LPP TVRI Stasiun Jawa Tengah - Tim Teknologi Informasi & Bidang Promo. All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- Modal Form (Create / Edit Archive) -->
+    <div id="archiveModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-xl overflow-hidden transform transition-all">
+            <!-- Modal Header -->
+            <div class="bg-tvri-navy text-white px-6 py-4 flex items-center justify-between border-b border-tvri-blue">
+                <h3 class="text-lg font-bold flex items-center gap-2" id="modalTitle">
+                    <i class="fa-solid fa-file-circle-plus text-tvri-cyan"></i>
+                    <span>Tambah Data Arsip</span>
+                </h3>
+                <button onclick="closeModal()" class="text-slate-300 hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Modal Form Body -->
+            <form id="archiveForm" onsubmit="handleFormSubmit(event)" class="p-6 space-y-4">
+                <input type="hidden" id="editId">
+
+                <!-- Judul Konten -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Judul Arsip <span class="text-red-500">*</span></label>
+                    <input type="text" id="inputJudul" required placeholder="Contoh: Filler Candi Borobudur Master" class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-tvri-cyan">
+                </div>
+
+                <!-- Kategori & Tanggal -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Kategori Promo <span class="text-red-500">*</span></label>
+                        <select id="inputKategori" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-tvri-cyan">
+                            <option value="" disabled selected>Pilih Kategori</option>
+                            <option value="PROMO ACARA TV">PROMO ACARA TV</option>
+                            <option value="FILLER PROMO">FILLER PROMO</option>
+                            <option value="SATU HARI SATU FAKTA">SATU HARI SATU FAKTA</option>
+                            <option value="REPACKED PAT">REPACKED PAT</option>
+                            <option value="GREATING">GREATING</option>
+                            <option value="ILM">ILM</option>
+                            <option value="BUGS">BUGS</option>
+                            <option value="PROMO PNBP">PROMO PNBP</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Tanggal <span class="text-red-500">*</span></label>
+                        <input type="date" id="inputTanggal" required class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-tvri-cyan">
+                    </div>
+                </div>
+
+                <!-- Google Drive Link -->
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Link Google Drive</label>
+                    <input type="url" id="inputDriveLink" placeholder="https://drive.google.com/..." class="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-tvri-cyan">
+                </div>
+
+                <!-- Modal Action Buttons -->
+                <div class="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+                    <button type="button" onclick="closeModal()" class="px-4 py-2 rounded-lg border border-slate-300 text-slate-600 hover:bg-slate-100 text-sm font-medium transition">Batal</button>
+                    <button type="submit" class="px-5 py-2 rounded-lg bg-tvri-navy hover:bg-tvri-blue text-white text-sm font-semibold shadow-md transition">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-slate-800 text-white px-4 py-3 rounded-xl shadow-xl transform translate-y-20 opacity-0 transition-all duration-300 flex items-center gap-3 z-50">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toastMessage" class="text-sm font-medium">Pesan notifikasi...</span>
+    </div>
+
+    <!-- Application Core Script -->
+    <script>
+        // Constants & Initial State
+        const CATEGORIES = [
+            "SEMUA",
+            "PROMO ACARA TV",
+            "FILLER PROMO",
+            "SATU HARI SATU FAKTA",
+            "REPACKED PAT",
+            "GREATING",
+            "ILM",
+            "BUGS",
+            "PROMO PNBP"
+        ];
+
+        // Dummy Master Data TVRI Jateng
+        const DEFAULT_DATA = [
+            {
+                id: "PRM-101",
+                judul: "Promo Acara Pesona Jateng - Special November",
+                kategori: "PROMO ACARA TV",
+                tanggal: "2026-11-01",
+                driveLink: "https://drive.google.com/drive/folders/sample1"
+            },
+            {
+                id: "PRM-102",
+                judul: "Filler Promo Digitalisasi Penyiaran TVRI",
+                kategori: "FILLER PROMO",
+                tanggal: "2026-11-02",
+                driveLink: "https://drive.google.com/drive/folders/sample2"
+            },
+            {
+                id: "PRM-103",
+                judul: "Fakta Menarik Candi Gedong Songo",
+                kategori: "SATU HARI SATU FAKTA",
+                tanggal: "2026-11-03",
+                driveLink: "https://drive.google.com/drive/folders/sample3"
+            },
+            {
+                id: "PRM-104",
+                judul: "Repacked PAT Dialog Interaktif Pilkada",
+                kategori: "REPACKED PAT",
+                tanggal: "2026-11-04",
+                driveLink: "https://drive.google.com/drive/folders/sample4"
+            },
+            {
+                id: "PRM-105",
+                judul: "Greating Pahlawan Nasional 2026",
+                kategori: "GREATING",
+                tanggal: "2026-11-10",
+                driveLink: "https://drive.google.com/drive/folders/sample5"
+            },
+            {
+                id: "PRM-106",
+                judul: "ILM Cegah Stunting di Jawa Tengah",
+                kategori: "ILM",
+                tanggal: "2026-10-28",
+                driveLink: "https://drive.google.com/drive/folders/sample6"
+            },
+            {
+                id: "PRM-107",
+                judul: "Bugs Logo TVRI Jateng Emas",
+                kategori: "BUGS",
+                tanggal: "2026-10-15",
+                driveLink: "https://drive.google.com/drive/folders/sample7"
+            }
+        ];
+
+        // State Management
+        let archiveList = [];
+        let activeCategory = "SEMUA";
+        let currentPage = 1;
+        const itemsPerPage = 6;
+
+        // Initialize App on DOM Ready
+        document.addEventListener("DOMContentLoaded", () => {
+            loadInitialData();
+            renderCategoryTabs();
+            applyFilters();
+        });
+
+        // Load data from localStorage or fallback to default
+        function loadInitialData() {
+            const stored = localStorage.getItem("tvri_promo_archives");
+            if (stored) {
+                try {
+                    archiveList = JSON.parse(stored);
+                } catch(e) {
+                    archiveList = [...DEFAULT_DATA];
+                }
+            } else {
+                archiveList = [...DEFAULT_DATA];
+                saveToLocalStorage();
+            }
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem("tvri_promo_archives", JSON.stringify(archiveList));
+        }
+
+        // Render Category Tabs
+        function renderCategoryTabs() {
+            const container = document.getElementById("categoryTabs");
+            container.innerHTML = CATEGORIES.map(cat => {
+                const isActive = activeCategory === cat;
+                const activeClass = isActive 
+                    ? "bg-tvri-navy text-white shadow-sm font-semibold" 
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium";
+                
+                return `
+                    <button onclick="setCategoryTab('${cat}')" class="px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition ${activeClass}">
+                        ${cat}
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function setCategoryTab(cat) {
+            activeCategory = cat;
+            currentPage = 1;
+            renderCategoryTabs();
+            applyFilters();
+        }
+
+        // Filter and Search System
+        function applyFilters() {
+            const searchVal = document.getElementById("searchInput").value.toLowerCase().trim();
+
+            const filtered = archiveList.filter(item => {
+                // Category Filter
+                const matchesCat = activeCategory === "SEMUA" || item.kategori === activeCategory;
+
+                // Search Bar Filter
+                const matchesSearch = 
+                    item.judul.toLowerCase().includes(searchVal) ||
+                    item.kategori.toLowerCase().includes(searchVal) ||
+                    item.id.toLowerCase().includes(searchVal);
+
+                return matchesCat && matchesSearch;
+            });
+
+            updateStatistics();
+            renderTable(filtered);
+        }
+
+        function resetFilters() {
+            document.getElementById("searchInput").value = "";
+            activeCategory = "SEMUA";
+            currentPage = 1;
+            renderCategoryTabs();
+            applyFilters();
+        }
+
+        // Calculate and Update Dashboard Stat Cards
+        function updateStatistics() {
+            document.getElementById("stat-total").innerText = archiveList.length;
+
+            // Compute Valid Drive Links
+            const driveCount = archiveList.filter(i => i.driveLink && i.driveLink.trim() !== "").length;
+            document.getElementById("stat-drive-link").innerText = driveCount;
+
+            // Compute Top Category
+            const counts = {};
+            archiveList.forEach(i => {
+                counts[i.kategori] = (counts[i.kategori] || 0) + 1;
+            });
+
+            let topCat = "-";
+            let maxCount = 0;
+            for (const [cat, count] of Object.entries(counts)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    topCat = cat;
+                }
+            }
+
+            document.getElementById("stat-top-cat").innerText = topCat;
+            document.getElementById("stat-top-cat-count").innerText = `${maxCount} File Archive`;
+        }
+
+        // Render Table & Pagination
+        function renderTable(data) {
+            const tbody = document.getElementById("tableBody");
+            const emptyState = document.getElementById("emptyState");
+            const tableInfo = document.getElementById("tableInfo");
+
+            if (data.length === 0) {
+                tbody.innerHTML = "";
+                emptyState.classList.remove("hidden");
+                tableInfo.innerText = "Menampilkan 0 data";
+                renderPagination(0, 1);
+                return;
+            }
+
+            emptyState.classList.add("hidden");
+
+            // Pagination calculation
+            const totalPages = Math.ceil(data.length / itemsPerPage);
+            if (currentPage > totalPages) currentPage = totalPages || 1;
+
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, data.length);
+            const paginatedData = data.slice(startIndex, endIndex);
+
+            tableInfo.innerText = `Menampilkan ${startIndex + 1} - ${endIndex} dari ${data.length} data`;
+
+            // HTML Generation for Table Rows
+            tbody.innerHTML = paginatedData.map((item, index) => {
+                return `
+                    <tr class="hover:bg-slate-50 transition border-b border-slate-100">
+                        <td class="py-3 px-4 text-center font-mono text-xs text-slate-400 font-semibold">${startIndex + index + 1}</td>
+                        <td class="py-3 px-4 font-semibold text-slate-800">
+                            <div>${escapeHtml(item.judul)}</div>
+                            <span class="text-[10px] text-slate-400 font-mono">ID: ${item.id}</span>
+                        </td>
+                        <td class="py-3 px-4">
+                            <span class="px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 inline-block">
+                                ${escapeHtml(item.kategori)}
+                            </span>
+                        </td>
+                        <td class="py-3 px-4 text-slate-600 text-xs">${formatDate(item.tanggal)}</td>
+                        <td class="py-3 px-4 text-center">
+                            ${item.driveLink ? `
+                                <a href="${escapeHtml(item.driveLink)}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-xs bg-sky-50 text-tvri-cyan hover:bg-tvri-cyan hover:text-white px-3 py-1.5 rounded-lg border border-sky-200 transition font-medium">
+                                    <i class="fa-brands fa-google-drive"></i>
+                                    <span>Buka Tautan</span>
+                                </a>
+                            ` : `<span class="text-xs text-slate-400 italic">Tidak ada link</span>`}
+                        </td>
+                        <td class="py-3 px-4 text-center">
+                            <div class="flex items-center justify-center space-x-2">
+                                <button onclick="editArchive('${item.id}')" title="Edit Data" class="text-slate-500 hover:text-tvri-cyan p-1.5 rounded hover:bg-slate-100 transition">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </button>
+                                <button onclick="deleteArchive('${item.id}')" title="Hapus Data" class="text-slate-500 hover:text-red-500 p-1.5 rounded hover:bg-slate-100 transition">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join("");
+
+            renderPagination(totalPages, currentPage);
+        }
+
+        // Render Pagination Control Buttons
+        function renderPagination(totalPages, page) {
+            const container = document.getElementById("pagination");
+            if (totalPages <= 1) {
+                container.innerHTML = "";
+                return;
+            }
+
+            let html = `
+                <button onclick="changePage(${page - 1})" ${page === 1 ? 'disabled' : ''} class="px-2.5 py-1 border rounded text-xs bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                const isActive = i === page;
+                html += `
+                    <button onclick="changePage(${i})" class="px-3 py-1 border rounded text-xs ${isActive ? 'bg-tvri-navy text-white font-bold' : 'bg-white text-slate-600 hover:bg-slate-50'}">
+                        ${i}
+                    </button>
+                `;
+            }
+
+            html += `
+                <button onclick="changePage(${page + 1})" ${page === totalPages ? 'disabled' : ''} class="px-2.5 py-1 border rounded text-xs bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            `;
+
+            container.innerHTML = html;
+        }
+
+        function changePage(newPage) {
+            currentPage = newPage;
+            applyFilters();
+        }
+
+        // Modal Form Handlers
+        function openModal(editId = null) {
+            const modal = document.getElementById("archiveModal");
+            const form = document.getElementById("archiveForm");
+            const title = document.getElementById("modalTitle");
+
+            form.reset();
+            document.getElementById("editId").value = "";
+
+            if (editId) {
+                const item = archiveList.find(i => i.id === editId);
+                if (item) {
+                    title.innerHTML = `<i class="fa-solid fa-pen-to-square text-tvri-cyan"></i> <span>Edit Data Arsip</span>`;
+                    document.getElementById("editId").value = item.id;
+                    document.getElementById("inputJudul").value = item.judul;
+                    document.getElementById("inputKategori").value = item.kategori;
+                    document.getElementById("inputTanggal").value = item.tanggal;
+                    document.getElementById("inputDriveLink").value = item.driveLink || "";
+                }
+            } else {
+                title.innerHTML = `<i class="fa-solid fa-file-circle-plus text-tvri-cyan"></i> <span>Tambah Data Arsip</span>`;
+                document.getElementById("inputTanggal").value = new Date().toISOString().split('T')[0];
+            }
+
+            modal.classList.remove("hidden");
+        }
+
+        function closeModal() {
+            document.getElementById("archiveModal").classList.add("hidden");
+        }
+
+        function handleFormSubmit(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById("editId").value;
+            const judul = document.getElementById("inputJudul").value.trim();
+            const kategori = document.getElementById("inputKategori").value;
+            const tanggal = document.getElementById("inputTanggal").value;
+            const driveLink = document.getElementById("inputDriveLink").value.trim();
+
+            if (editId) {
+                // Update Existing Item
+                const index = archiveList.findIndex(i => i.id === editId);
+                if (index !== -1) {
+                    archiveList[index] = {
+                        id: editId,
+                        judul,
+                        kategori,
+                        tanggal,
+                        driveLink
+                    };
+                    showToast("Data arsip berhasil diperbarui!", "success");
+                }
+            } else {
+                // Create New Item
+                const newId = "PRM-" + Math.floor(100 + Math.random() * 900);
+                const newItem = {
+                    id: newId,
+                    judul,
+                    kategori,
+                    tanggal,
+                    driveLink
+                };
+                archiveList.unshift(newItem);
+                showToast("Data arsip baru berhasil ditambahkan!", "success");
+            }
+
+            saveToLocalStorage();
+            closeModal();
+            applyFilters();
+        }
+
+        function editArchive(id) {
+            openModal(id);
+        }
+
+        function deleteArchive(id) {
+            const item = archiveList.find(i => i.id === id);
+            if (!item) return;
+
+            // Custom UI Confirmation fallback using simple modal window behavior
+            const isConfirmed = window.confirm(`Apakah Anda yakin ingin menghapus data arsip:\n"${item.judul}"?`);
+            if (isConfirmed) {
+                archiveList = archiveList.filter(i => i.id !== id);
+                saveToLocalStorage();
+                applyFilters();
+                showToast("Data arsip berhasil dihapus", "info");
+            }
+        }
+
+        // Export Functionalities
+        function exportToJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(archiveList, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `Arsip_Promo_TVRI_Jateng_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Berhasil mengekspor data ke JSON", "success");
+        }
+
+        function exportToCSV() {
+            if (archiveList.length === 0) {
+                showToast("Tidak ada data untuk diekspor", "warning");
+                return;
+            }
+
+            const headers = ["ID", "Judul Arsip", "Kategori", "Tanggal", "Link Google Drive"];
+            const rows = archiveList.map(i => [
+                `"${i.id}"`,
+                `"${i.judul.replace(/"/g, '""')}"`,
+                `"${i.kategori}"`,
+                `"${i.tanggal}"`,
+                `"${i.driveLink || ''}"`
+            ]);
+
+            const csvContent = "data:text/csv;charset=utf-8," 
+                + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `Arsip_Promo_TVRI_Jateng_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            showToast("Berhasil mengekspor data ke CSV", "success");
+        }
+
+        // Helper Utilities
+        function formatDate(dateStr) {
+            if (!dateStr) return "-";
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateStr).toLocaleDateString('id-ID', options);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;")
+                      .replace(/</g, "&lt;")
+                      .replace(/>/g, "&gt;")
+                      .replace(/"/g, "&quot;")
+                      .replace(/'/g, "&#039;");
+        }
+
+        function showToast(message, type = "success") {
+            const toast = document.getElementById("toast");
+            const toastMsg = document.getElementById("toastMessage");
+            const toastIcon = document.getElementById("toastIcon");
+
+            toastMsg.innerText = message;
+            
+            if (type === "success") {
+                toastIcon.className = "fa-solid fa-circle-check text-emerald-400 text-lg";
+            } else if (type === "info") {
+                toastIcon.className = "fa-solid fa-circle-info text-sky-400 text-lg";
+            } else if (type === "warning") {
+                toastIcon.className = "fa-solid fa-triangle-exclamation text-amber-400 text-lg";
+            }
+
+            toast.classList.remove("translate-y-20", "opacity-0");
+            
+            setTimeout(() => {
+                toast.classList.add("translate-y-20", "opacity-0");
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
